@@ -1,0 +1,63 @@
+{
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "singleQuote": true,
+  "overrides": [
+    {
+      "files": ["**/*.css", "**/*.scss", "**/*.html"],
+      "options": {
+        "singleQuote": false
+      }
+    },
+    {
+      "files": ["*.ts", "*.js"],
+      "options": {
+        "parser": "typescript",
+        "tabWidth": 2,
+        "semi": false,
+        "singleQuote": true,
+        "printWidth": 80
+      }
+    },
+    {
+      "files": ["*.tsx"],
+      "options": {
+        "parser": "typescript",
+        "tabWidth": 2,
+        "semi": false,
+        "singleQuote": true,
+        "printWidth": 80
+      }
+    },
+    {
+      "files": ["*.json"],
+      "options": {
+        "parser": "json",
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": ["*.html"],
+      "options": {
+        "parser": "html",
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": ["*.css"],
+      "options": {
+        "parser": "css",
+        "tabWidth": 2
+      }
+    },
+    {
+      "files": ["*.md"],
+      "options": {
+        "parser": "markdown",
+        "tabWidth": 2,
+        "semi": false,
+        "singleQuote": true,
+        "printWidth": 100
+      }
+    }
+  ]
+}

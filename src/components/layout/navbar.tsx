@@ -12,6 +12,7 @@ import React, { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Logo } from './logo'
 import { ModeToggle } from './mode-toggle'
+import AuthButton from '../buttons/authButton'
 
 interface NavbarProps {
   navItems: {
@@ -150,14 +151,19 @@ const DesktopNav = ({ navItems, visible }: NavbarProps) => {
                 target="_blank"
                 className="hidden md:block"
               >
-                <Button variant="secondary">
+                <Button size="sm" variant="secondary">
                   <Github /> Clone
                 </Button>
               </Link>
             </motion.div>
           )}
         </AnimatePresence>
-        <Button className="hidden md:z-20 md:block">Login</Button>
+        <div className="hidden md:z-20 md:block">
+          <AuthButton size="sm" className="px-4" />
+        </div>
+        {/* <Button size="sm" className="hidden px-4 md:z-20 md:block">
+          Login
+        </Button> */}
       </div>
     </motion.div>
   )

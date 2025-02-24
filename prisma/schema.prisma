@@ -1,0 +1,494 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Base role types for the system
+enum RoleCategory {
+    ADMIN
+    MODERATOR
+    GARDENER
+    MEMBER
+    AGENT
+    ANON
+    BOT
+    SUS
+    IMPOSTOR
+    BANNED
+}
+
+model User {
+    id                        String          @id
+    appWallet                 String          @unique
+    username                  String          @unique
+    displayName               String
+    extWallet                 String          @unique
+    email                     String?         @unique
+    bio                       String?
+    website                   String?
+    avatarUrl                 String?
+    bannerUrl                 String?
+    metadata                  String? // To be defined
+
+    // Relationships
+    profile                   Profile?
+    proofOfCommunity          ProofOfCommunity?
+    communities               UserCommunity[]
+    projects                  Project[]
+    posts                     Post[]
+    rewards                   Reward[]
+    comments                  Comment[]
+    votes                     Vote[]
+    claimedBadges             UserBadge[]
+
+    // E-HRBAC-T relationships
+    roles                     UserRole[]
+    roleGrants                RoleGrant[]     @relation("grantor")
+    tokens                    UserToken[]     // Token holdings for gating
+
+    createdAt                 DateTime        @default(now())
+    updatedAt                 DateTime        @updatedAt
+
+    @@index([appWallet, username, extWallet, email])
+}
+
+// Existing Profile model remains unchanged
+model Profile {
+    id                        String          @id @default(uuid())
+
+    // User basic profile
+    firstName                 String?
+    lastName                  String?
+    cityRegion                String?
+    country                   String?
+    primaryRole               String?
+    professionalProfile       String?
+    isStudent                 Boolean         @default(false)
+
+    // Socials
+    discordUsername           String?
+    farcasterId               Int?
+    farcasterUsername         String?
+    githubUsername            String?
+    xUsername                 String?
+    telegramUsername          String?
+
+    // Relationships
+    user                      User            @relation(fields: [userId], references: [id])
+    userId                    String          @unique
+
+    createdAt                 DateTime        @default(now())
+    updatedAt                 DateTime        @updatedAt
+
+    @@index([farcasterUsername, githubUsername, xUsername, telegramUsername])
+}
+
+model ProofOfCommunity {
+  id                          Int                       @id @default(autoincrement())
+  tokenId                     Int?
+  contractAddress             String?
+  chainId                     Int?
+
+  description                 String
+  external_url                String
+  
+  image                       String
+  name                        String
+  points                      Int                       @default(0)
+  percentage                  Float                     @default(0)
+  tier                        String
+  stage                       Int                       @default(0)
+  userBadges                  UserBadge[]
+  
+  userId                      String                    @unique
+  user                        User                      @relation(fields: [userId], references: [id])
+
+  createdAt                   DateTime                  @default(now())
+  updatedAt                   DateTime                  @updatedAt
+  
+  @@index([tokenId, contractAddress, userId])
+}
+
+model Project {
+    id                        String          @id @default(uuid())
+    wallet                    String?         @unique
+    name                      String          @unique
+    description               String
+    
+    website                   String?
+    email                     String?
+    category                  String?
+    projectType               String?
+    apiUrl                    String          @default("")    // API URL used for the project
+    activeUrl                 String          @default("")    // Main quest or challenge to get started with the project
+    avatarUrl                 String?
+    bannerUrl                 String?
+
+    token                     Token?
+    tokenId                   String?         @unique
+    contractAddresses         String[]
+    networks                  String[]
+
+    farcasterId               Int?
+    farcasterUsername         String?
+    githubUsername            String?
+    xUsername                 String?
+    telegramUsername          String?
+
+    badges                    Badge[]
+
+    // Relationships 
+    admin                     User            @relation(fields: [adminId], references: [id])
+    adminId                   String
+    community                 Community?      @relation(fields: [communityId], references: [id])
+    communityId               String?
+
+    // E-HRBAC-T: Project-specific roles and permissions
+    roles                     Role[]          @relation("projectRoles")
+
+    createdAt                 DateTime        @default(now())
+    updatedAt                 DateTime        @updatedAt
+
+    @@index([wallet, name, email, category, adminId])
+}
+
+model Community {
+    id                        String          @id @default(uuid())
+    name                      String          @unique
+    category                  String
+    description               String?
+
+    avatarUrl                 String?
+    bannerUrl                 String?
+
+    token                     Token?
+    tokenId                   String?         @unique
+    contractAddresses         String[]
+    networks                  String[]
+
+    badges                    Badge[]
+    members                   UserCommunity[]
+    posts                     Post[]
+    projects                  Project[]
+
+    // E-HRBAC-T: Community-specific roles and token requirements
+    communityRoles            Role[]          @relation("communityRoles")
+    userRoles                 UserRole[]       // Scoped roles for this community
+    requiredTokens            CommunityToken[] // Token gating requirements
+
+    createdAt                 DateTime        @default(now())
+    updatedAt                 DateTime        @updatedAt
+
+    @@index([name])
+}
+
+// Enhanced UserCommunity with role integration
+model UserCommunity {
+    id                        String      @id @default(uuid())
+
+    isAdmin                   Boolean     @default(false)
+    isModerator               Boolean     @default(false)
+
+    user                      User        @relation(fields: [userId], references: [id])
+    userId                    String
+    community                 Community   @relation(fields: [communityId], references: [id])
+    communityId               String
+
+    // E-HRBAC-T: Link to formal roles
+    roles                     UserRole[]
+    
+    createdAt                 DateTime    @default(now())
+    updatedAt                 DateTime    @updatedAt
+
+    @@unique([userId, communityId])
+}
+
+// E-HRBAC-T Core Models
+model Role {
+    id                        String          @id @default(uuid())
+    category                  RoleCategory
+    name                      String          @unique
+    description               String?
+
+    // Role hierarchy
+    parentRole                Role?           @relation("RoleHierarchy", fields: [parentId], references: [id])
+    parentId                  String?
+    childRoles                Role[]          @relation("RoleHierarchy")
+
+    // Scope relationships
+    project                   Project?        @relation("projectRoles", fields: [projectId], references: [id])
+    projectId                 String?
+    community                 Community?      @relation("communityRoles", fields: [communityId], references: [id])
+    communityId               String?
+
+    // Permission relationships
+    permissions               RolePermission[]
+    userRoles                 UserRole[]
+    roleGrants                RoleGrant[]
+
+    createdAt                 DateTime        @default(now())
+    updatedAt                 DateTime        @updatedAt
+
+    @@index([communityId, projectId, category])
+}
+
+model Permission {
+    id                        String          @id @default(uuid())
+    name                      String          @unique
+    description               String?
+    roles                     RolePermission[]
+
+    createdAt                 DateTime        @default(now())
+    updatedAt                 DateTime        @updatedAt
+}
+
+model RolePermission {
+    id                        String          @id @default(uuid())
+    role                      Role            @relation(fields: [roleId], references: [id])
+    roleId                    String
+    permission                Permission      @relation(fields: [permissionId], references: [id])
+    permissionId              String
+
+    createdAt                 DateTime        @default(now())
+    updatedAt                 DateTime        @updatedAt
+
+    @@unique([roleId, permissionId])
+}
+
+model UserRole {
+    id                        String          @id @default(uuid())
+    user                      User            @relation(fields: [userId], references: [id])
+    userId                    String
+    role                      Role            @relation(fields: [roleId], references: [id])
+    roleId                    String
+
+    // Scope - for community/project-specific roles
+    community                 Community?      @relation(fields: [communityId], references: [id])
+    communityId               String?
+    userCommunity             UserCommunity?  @relation(fields: [userCommunityId], references: [id])
+    userCommunityId           String?
+
+    createdAt                 DateTime        @default(now())
+    updatedAt                 DateTime        @updatedAt
+
+    @@unique([userId, roleId, communityId])
+}
+
+model RoleGrant {
+    id          String      @id @default(uuid())
+    grantor     User        @relation("grantor", fields: [grantorId], references: [id])
+    grantorId   String
+    role        Role        @relation(fields: [roleId], references: [id])
+    roleId      String
+    expiresAt   DateTime?
+    revoked     Boolean     @default(false)
+    revokedAt   DateTime?
+    
+    createdAt     DateTime        @default(now())
+    updatedAt     DateTime        @updatedAt
+
+    @@index([grantorId])
+    @@index([roleId])
+}
+
+// Token Gating Models
+
+model Token {
+    id                  String              @id @default(uuid())
+    address             String              @unique
+    chainId             Int
+    symbol              String
+    decimals            Int
+
+    community           Community?          @relation(fields: [communityId], references: [id])
+    communityId         String?             @unique
+    project             Project?            @relation(fields: [projectId], references: [id])
+    projectId           String?             @unique
+    userTokens          UserToken[]
+    communities         CommunityToken[]
+
+    createdAt           DateTime            @default(now())
+    updatedAt           DateTime            @updatedAt
+
+    @@index([chainId, address])
+}
+
+model UserToken {
+    id                  String      @id @default(uuid())
+    balance             Decimal
+    user                User        @relation(fields: [userId], references: [id])
+    userId              String
+    token               Token       @relation(fields: [tokenId], references: [id])
+    tokenId             String
+    
+    createdAt           DateTime        @default(now())
+    updatedAt           DateTime        @updatedAt
+
+    @@unique([userId, tokenId])
+}
+
+model CommunityToken {
+    id              String      @id @default(uuid())
+    minBalance      Decimal
+    community       Community   @relation(fields: [communityId], references: [id])
+    communityId     String
+    token           Token       @relation(fields: [tokenId], references: [id])
+    tokenId         String
+
+    createdAt     DateTime        @default(now())
+    updatedAt     DateTime        @updatedAt
+
+    @@unique([communityId, tokenId])
+}
+
+model Post {
+    id          String      @id @default(uuid())
+    title       String
+    content     String?
+    media_url   String?
+    category    String?     @default("default")
+    upvotes     Int         @default(0)
+    downvotes   Int         @default(0)
+    author      User        @relation(fields: [authorId], references: [id])
+    authorId    String
+    community   Community?  @relation(fields: [communityId], references: [id])
+    communityId String?
+    comments    Comment[]
+    votes       Vote[]
+
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+}
+
+model Comment {
+    id                    String          @id @default(uuid())
+    content               String
+    upvotes               Int             @default(0)
+    downvotes             Int             @default(0)
+    author                User            @relation(fields: [authorId], references: [id])
+    authorId              String
+    post                  Post            @relation(fields: [postId], references: [id])
+    postId                String
+    votes                 Vote[]
+    parentComment         Comment?        @relation("ChildComments", fields: [parentCommentId], references: [id])
+    parentCommentId       String?
+    childComments         Comment[]       @relation("ChildComments")
+
+    createdAt             DateTime        @default(now())
+    updatedAt             DateTime        @updatedAt
+}
+
+model Vote {
+    id                    String          @id @default(uuid())
+    voteValue             Int             @default(0)
+
+    // Relationships
+    user                  User            @relation(fields: [userId], references: [id])
+    userId                String
+    post                  Post?           @relation(fields: [postId], references: [id])
+    postId                String?
+    comment               Comment?        @relation(fields: [commentId], references: [id])
+    commentId             String?
+    
+    createdAt             DateTime        @default(now())
+    updatedAt             DateTime        @updatedAt
+}
+
+model Dummy {
+  id   String    @id @default(uuid())
+  name String
+}
+
+model Quest {
+  id                      String          @id @default(uuid())
+  title                   String
+  description             String?
+  start                   DateTime
+  end                     DateTime
+  rewards                 Reward[] 
+
+  badge                   Badge?          @relation(fields: [badgeId], references: [id])
+  badgeId                 String?         @unique
+
+  createdAt               DateTime        @default(now())
+  updatedAt               DateTime        @updatedAt
+}
+
+model Reward {
+  id                          String          @id @default(uuid())
+  name                        String
+  description                 String
+  category                    String          // E.g., $REGEN, Regen Points, NFT
+  amount                      Int
+
+  // Relationships
+  user                        User?           @relation(fields: [userId], references: [id])
+  userId                      String?
+  quest                       Quest?          @relation(fields: [questId], references: [id])
+  questId                     String?
+
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+}
+
+model Badge {
+  id                          String          @id @default(uuid())
+  name                        String
+  description                 String?
+  tiers                       Tier[]
+  
+  contractAddress             String?
+  tokenId                     String?
+  chain                       String?
+  chainId                     Int?
+  
+  quest                       Quest?
+
+  project                     Project?        @relation(fields: [projectId], references: [id])
+  projectId                   String?
+  community                   Community?      @relation(fields: [communityId], references: [id])
+  communityId                 String? 
+
+  users                       UserBadge[]
+
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+}
+
+model Tier {
+  id                          String          @id @default(uuid())
+  points                      Int
+  level                       Int
+  metadata                    String?         // To be defined
+  badge                       Badge?          @relation(fields: [badgeId], references: [id])
+  badgeId                     String?
+
+  userBadge                   UserBadge[]
+
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+}
+
+model UserBadge {
+  id                          String                @id @default(uuid())
+  contractAddress             String                @default("0x0000000000000000000000000000000000000000")
+  points                      Int
+
+  user                        User  @relation(fields: [userId], references: [id])
+  userId                      String
+  badge                       Badge @relation(fields: [badgeId], references: [id])
+  badgeId                     String
+  tierReached                 Tier  @relation(fields: [tierReachedId], references: [id])
+  tierReachedId               String
+
+  proofOfCommunity            ProofOfCommunity[]
+
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+
+  @@unique([userId, badgeId])
+}

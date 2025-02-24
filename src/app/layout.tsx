@@ -5,7 +5,8 @@ import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
 
 import BaseLayout from '@/components/layout/base-layout'
-
+import OnchainProvider from '@/providers/onchainProvider'
+import { Toaster } from 'sonner'
 export const metadata: Metadata = {
   title: 'burrito.gg',
   description: 'play, learn and earn with burrito and frens',
@@ -26,7 +27,10 @@ export default function RootLayout({
       <body
         className={cn('bg-white antialiased dark:bg-black', fontSans.variable)}
       >
-        <BaseLayout>{children}</BaseLayout>
+        <OnchainProvider>
+          <BaseLayout>{children}</BaseLayout>
+          <Toaster richColors />
+        </OnchainProvider>
       </body>
     </html>
   )

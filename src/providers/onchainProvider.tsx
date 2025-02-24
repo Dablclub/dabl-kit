@@ -14,7 +14,7 @@ import { mainnet, polygon, polygonAmoy } from 'viem/chains'
 import { walletConnect } from 'wagmi/connectors'
 import { useRouter } from 'next/navigation'
 import { getDynamicCredentials } from '@/utils/dynamic'
-import { getOrCreateUser } from '@/server/controllers/auth'
+import { loginUser } from '@/services/auth'
 
 const alchemyApiKey = process.env.NEXT_PUBLIC_ALCHEMY_API_KEY ?? ''
 const walletConnectProjectId =
@@ -63,7 +63,7 @@ export default function OnchainProvider({ children }: { children: ReactNode }) {
         return
       }
       try {
-        const fetchedUser = await getOrCreateUser({
+        const fetchedUser = await loginUser({
           dynamicUserId: user.userId,
           appWallet: appWallet as Address,
           extWallet: extWallet as Address,

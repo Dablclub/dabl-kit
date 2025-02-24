@@ -1,22 +1,46 @@
 import { NextResponse } from 'next/server'
-import { UserService } from '@/server/services/user.service'
+import prisma from '@/server/prismaClient'
+import { createUser } from '@/server/controllers/users'
 
-const userService = new UserService()
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
 
-export async function GET(req: Request) {
+  const take = Number(searchParams.get('take')) || 10
+  const skip = Number(searchParams.get('skip')) || 0
+  const cursor = searchParams.get('cursor')
+  const orderBy = searchParams.get('orderBy') || 'id'
+  const direction = searchParams.get('direction') || 'desc'
+
   try {
-    const { searchParams } = new URL(req.url)
-    const id = searchParams.get('id')
+    const users = await prisma.user.findMany({
+      take,
+      skip,
+      ...(cursor && {
+        cursor: {
+          id: cursor,
+        },
+      }),
+      orderBy: {
+        [orderBy]: direction,
+      },
+      include: {
+        // Include any relations you need
+      },
+    })
 
-    if (id) {
-      const user = await userService.getUser(id)
-      return NextResponse.json(user)
-    }
+    // Get total count for pagination
+    const total = await prisma.user.count()
 
-    const users = await userService.searchUsers(searchParams.get('query') || '')
-    return NextResponse.json(users)
+    return NextResponse.json({
+      users,
+      metadata: {
+        total,
+        hasMore: users.length === take,
+        nextCursor: users[users.length - 1]?.id,
+      },
+    })
   } catch (error) {
-    console.log('error in back-end /api/users GET route:', error)
+    console.error('Failed to fetch users:', error)
     return NextResponse.json(
       { error: 'Failed to fetch users' },
       { status: 500 },
@@ -27,7 +51,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const data = await req.json()
-    const user = await userService.createUser(data)
+    const user = await createUser(data)
     return NextResponse.json(
       {
         user,
@@ -51,7 +75,10 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
     const data = await req.json()
-    const user = await userService.updateUser(id, data)
+    const user = await prisma.user.update({
+      where: { id },
+      data,
+    })
     return NextResponse.json(
       {
         user,
@@ -74,7 +101,9 @@ export async function DELETE(req: Request) {
     if (!id) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 })
     }
-    const deletedUser = await userService.deleteUser(id)
+    const deletedUser = await prisma.user.delete({
+      where: { id },
+    })
     return NextResponse.json(
       {
         user: deletedUser,

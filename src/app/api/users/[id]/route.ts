@@ -1,10 +1,8 @@
-import { UserService } from '@/server/services/user.service'
+import prisma from '@/server/prismaClient'
 import { NextRequest, NextResponse } from 'next/server'
 
-const userService = new UserService()
-
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
@@ -17,7 +15,12 @@ export async function GET(
       )
     }
 
-    const user = await userService.getUserProfile(id)
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        profile: true,
+      },
+    })
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
@@ -45,7 +48,10 @@ export async function PATCH(
       )
     }
 
-    const user = await userService.updateUser(id, data)
+    const user = await prisma.user.update({
+      where: { id },
+      data,
+    })
 
     return NextResponse.json(user)
   } catch (error) {
@@ -58,7 +64,7 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } },
 ) {
   try {
@@ -71,7 +77,9 @@ export async function DELETE(
       )
     }
 
-    await userService.deleteUser(id)
+    await prisma.user.delete({
+      where: { id },
+    })
 
     return NextResponse.json(
       { message: 'User deleted successfully' },

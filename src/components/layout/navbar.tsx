@@ -249,7 +249,8 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
                     <Github /> Clone
                   </Button>
                 </Link>
-                <Button className="block w-1/2 text-lg md:hidden">Login</Button>
+
+                <AuthButton className="block w-1/2 px-4 text-lg md:hidden" />
               </div>
             </motion.div>
           )}

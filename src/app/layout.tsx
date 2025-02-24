@@ -8,8 +8,8 @@ import BaseLayout from '@/components/layout/base-layout'
 import OnchainProvider from '@/providers/onchainProvider'
 import { Toaster } from 'sonner'
 export const metadata: Metadata = {
-  title: 'burrito.gg',
-  description: 'play, learn and earn with burrito and frens',
+  title: 'dabl_kit',
+  description: 'Your home for all things AI x Onchain',
 }
 
 const fontSans = Inter({

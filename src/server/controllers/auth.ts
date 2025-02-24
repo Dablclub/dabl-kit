@@ -37,6 +37,8 @@ export async function getOrCreateUser({
     return user
   } catch (error) {
     console.error(error)
-    return null
+    throw new Error(
+      'getOrCreateUser: Failed to get or create user [controller]',
+    )
   }
 }

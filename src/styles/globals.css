@@ -7,7 +7,6 @@ html {
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
   font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -19,6 +18,15 @@ body {
 
 .squircle {
   clip-path: url(#squircleClip);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background;
+  }
 }
 
 @layer base {
@@ -59,11 +67,11 @@ body {
     --radius: 0.5rem;
   }
   .dark {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 0 0% 100%;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
@@ -83,8 +91,8 @@ body {
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 222.2 84% 4.9%;
+    --input: 223 15% 9%;
     --ring: 222.2 84% 4.9%;
 
     --chart-1: 220 70% 50%;
@@ -96,11 +104,24 @@ body {
 }
 
 @layer base {
-  * {
-    @apply border-border;
+  .page {
+    @apply flex w-full flex-col items-center py-8;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  .container {
+    @apply flex w-full flex-col items-center md:!max-w-2xl lg:!max-w-3xl xl:!max-w-5xl;
+  }
+
+  @media all and (device-width: 768px) and (device-height: 1024px) and (orientation: portrait) {
+    .page {
+      @apply py-8;
+    }
+  }
+
+  @media all and (device-width: 820px) and (device-height: 1180px) and (orientation: portrait) {
+    .page {
+      @apply py-8;
+    }
   }
 }
 

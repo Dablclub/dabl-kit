@@ -1,5 +1,5 @@
-import prisma from '@/server/prismaClient'
 import { NextRequest, NextResponse } from 'next/server'
+import { getOrCreateUser } from '@/server/controllers/auth'
 
 export async function POST(req: NextRequest) {
   const { dynamicUserId, appWallet, email, extWallet, username } =
@@ -11,24 +11,13 @@ export async function POST(req: NextRequest) {
     )
   }
   try {
-    let user = await prisma.user.findFirst({
-      where: {
-        id: dynamicUserId,
-      },
+    const user = await getOrCreateUser({
+      dynamicUserId,
+      appWallet,
+      email,
+      extWallet,
+      username,
     })
-
-    if (!user) {
-      user = await prisma.user.create({
-        data: {
-          id: dynamicUserId,
-          appWallet,
-          displayName: username,
-          email,
-          extWallet,
-          username,
-        },
-      })
-    }
     return NextResponse.json(
       {
         user,

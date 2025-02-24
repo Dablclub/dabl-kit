@@ -6,7 +6,7 @@ export const Logo = () => {
   return (
     <Link
       href="/"
-      className="relative z-20 mr-4 flex items-center space-x-1 px-0 py-1 text-sm font-normal text-black"
+      className="relative z-20 flex items-center space-x-1 px-0 py-1 text-sm font-normal text-black"
     >
       <div className="relative overflow-hidden rounded-lg bg-white dark:bg-white">
         <Image

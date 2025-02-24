@@ -4,7 +4,7 @@ import React, { useRef, useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import Balancer from 'react-wrap-balancer'
-import { Button } from '@/components/ui/button'
+import AuthButton from '../buttons/authButton'
 
 export function Hero() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -101,7 +101,11 @@ export function Hero() {
         transition={{ duration: 0.2, delay: 0.7 }}
         className="z-20 mb-10 mt-8 flex w-full flex-col items-center justify-center gap-4 px-8 sm:flex-row md:mb-20"
       >
-        <Button size="lg">Join the Club</Button>
+        <AuthButton
+          buttonText="Join the Club"
+          size="lg"
+          className="text-lg font-semibold"
+        />
       </motion.div>
       {/* <motion.div
         initial={{ opacity: 0, y: 20 }}

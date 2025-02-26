@@ -5,22 +5,21 @@ const prisma = new PrismaClient()
 
 export async function GET() {
   try {
-    console.log('Fetching conversations...')
-    
     const conversations = await prisma.conversation.findMany({
+      include: {
+        participants: true
+      },
       orderBy: {
         createdAt: 'desc'
       },
       take: 10
     })
 
-    console.log('Fetched conversations:', conversations)
     return NextResponse.json(conversations)
   } catch (error) {
-    console.error('Detailed error:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch conversations' },
-      { status: 500 }
-    )
+    console.error('Error:', error)
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+  } finally {
+    await prisma.$disconnect()
   }
 } 

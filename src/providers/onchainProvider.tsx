@@ -45,18 +45,10 @@ export default function OnchainProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
 
   const events: DynamicEventsCallbacks = {
-    onAuthSuccess: async ({ primaryWallet, user }) => {
+    onAuthSuccess: async ({ user }) => {
       const { email, appWallet, extWallet } = getDynamicCredentials(user)
 
-      if (
-        !primaryWallet ||
-        !user ||
-        !user.userId ||
-        !user.username ||
-        !email ||
-        !appWallet ||
-        !extWallet
-      ) {
+      if (!user || !user.userId || !user.username || !extWallet) {
         console.error(
           'Missing args from onAuthSuccess event, please check Dynamic/onchainProvider',
         )
@@ -67,7 +59,7 @@ export default function OnchainProvider({ children }: { children: ReactNode }) {
           dynamicUserId: user.userId,
           appWallet: appWallet as Address,
           extWallet: extWallet as Address,
-          email: email as string,
+          email,
           username: user.username,
         })
         console.log('Succesfully fetched user:', fetchedUser)

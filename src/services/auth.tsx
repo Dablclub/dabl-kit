@@ -1,9 +1,9 @@
 interface LoginUserParams {
   dynamicUserId: string
   appWallet: string
-  email: string
+  email?: string
   extWallet: string
-  username: string
+  username?: string
 }
 
 export async function loginUser(data: LoginUserParams) {

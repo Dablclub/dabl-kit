@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "outDir": "dist",
+    "noEmit": false,
+    "moduleResolution": "node"
+  },
+  "include": ["src/app/api/omi-transcriptions/server.ts", "src/app/api/omi-transcriptions/route.ts"]
+} 

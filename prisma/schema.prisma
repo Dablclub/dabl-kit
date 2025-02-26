@@ -539,22 +539,21 @@ model UserQuest {
 }
 
 model Conversation {
-  id                          String                @id @default(uuid())
-  sessionId                   String                @unique
-  segments                    ConversationSegment[]
+  id                          String                @id
   participants                ConversationParticipant[]
+  content                     String
   title                       String?               // Optional conversation title
   summary                     String?               // Optional AI-generated summary
+  category                    String?               // Optional category
 
   createdAt                   DateTime              @default(now())
   updatedAt                   DateTime              @updatedAt
 
-  @@index([sessionId])
+  @@index([title])
 }
 
 model ConversationParticipant {
   id                          String                @id @default(uuid())
-  conversationSegments        ConversationSegment[]
   
   // Relationship to the conversation
   conversation                Conversation          @relation(fields: [conversationId], references: [id])
@@ -586,28 +585,4 @@ enum ParticipantRole {
   MEMBER
   OBSERVER
   BOT
-}
-
-model ConversationSegment {
-  id                          String                @id @default(uuid())
-  text                        String
-  speaker                     String
-  speakerId                   Int
-  isUser                      Boolean               @default(false)
-  startTime                   Float
-  endTime                     Float
-  
-  // Link to the conversation
-  conversation                Conversation          @relation(fields: [conversationId], references: [id])
-  conversationId              String
-  
-  // Link to the specific participant (optional but valuable)
-  participant                 ConversationParticipant? @relation(fields: [participantId], references: [id])
-  participantId               String?
-
-  createdAt                   DateTime              @default(now())
-  updatedAt                   DateTime              @updatedAt
-
-  @@index([conversationId, speakerId])
-  @@index([participantId]) // Index for participant lookups
 }

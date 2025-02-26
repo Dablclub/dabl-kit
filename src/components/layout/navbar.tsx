@@ -210,7 +210,6 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
             />
           )}
         </div>
-
         <AnimatePresence>
           {open && (
             <motion.div
@@ -252,6 +251,7 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
 
                 <AuthButton className="block w-1/2 px-4 text-lg md:hidden" />
               </div>
+              <ModeToggle />
             </motion.div>
           )}
         </AnimatePresence>

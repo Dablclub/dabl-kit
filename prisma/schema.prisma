@@ -40,6 +40,7 @@ model User {
     communities               UserCommunity[]
     projects                  Project[]
     posts                     Post[]
+    quests                    UserQuest[]
     rewards                   Reward[]
     comments                  Comment[]
     votes                     Vote[]
@@ -113,18 +114,31 @@ model ProofOfCommunity {
   @@index([tokenId, contractAddress, userId])
 }
 
+enum ProjectStage {
+    IDEATION
+    PROTOTYPE
+    MVP
+    GROWTH
+    FUNDED
+}
+
 model Project {
     id                        String          @id @default(uuid())
-    wallet                    String?         @unique
+    wallet                    String?
     name                      String          @unique
     description               String
+    repositoryUrl             String?
+    videoUrl                  String?
+    productionUrl             String?
+    pitchDeckUrl              String?
     
     website                   String?
     email                     String?
     category                  String?
     projectType               String?
-    apiUrl                    String          @default("")    // API URL used for the project
-    activeUrl                 String          @default("")    // Main quest or challenge to get started with the project
+    stage                     ProjectStage    @default(IDEATION)
+    apiUrl                    String?         @default("")    // API URL used for the project
+    activeUrl                 String?         @default("")    // Main quest or challenge to get started with the project
     avatarUrl                 String?
     bannerUrl                 String?
 
@@ -139,6 +153,7 @@ model Project {
     xUsername                 String?
     telegramUsername          String?
 
+    quests                    Quest[]
     badges                    Badge[]
 
     // Relationships 
@@ -413,9 +428,14 @@ model Quest {
 
   badge                   Badge?          @relation(fields: [badgeId], references: [id])
   badgeId                 String?         @unique
+  project                 Project         @relation(fields: [projectId], references: [id])
+  projectId               String
+  userQuests              UserQuest[]
 
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
+
+  @@index([title, badgeId, projectId])
 }
 
 model Reward {
@@ -433,6 +453,8 @@ model Reward {
 
   createdAt                   DateTime        @default(now())
   updatedAt                   DateTime        @updatedAt
+
+  @@index([userId, questId])
 }
 
 model Badge {
@@ -491,4 +513,26 @@ model UserBadge {
   updatedAt                   DateTime        @updatedAt
 
   @@unique([userId, badgeId])
+}
+
+enum UserQuestStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model UserQuest {
+  id                          String          @id @default(uuid())
+  status                      UserQuestStatus @default(NOT_STARTED)
+
+  user                        User            @relation(fields: [userId], references: [id])
+  userId                      String
+  quest                       Quest           @relation(fields: [questId], references: [id])
+  questId                     String
+
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+
+  @@unique([userId, questId])
 }

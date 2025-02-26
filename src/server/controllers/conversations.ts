@@ -18,11 +18,6 @@ export async function getConversationById(id: string) {
             },
           },
         },
-        segments: {
-          orderBy: {
-            startTime: 'asc',
-          },
-        },
       },
     })
     return conversation
@@ -32,46 +27,18 @@ export async function getConversationById(id: string) {
   }
 }
 
-export async function getConversationBySessionId(sessionId: string) {
-  try {
-    const conversation = await prisma.conversation.findUnique({
-      where: { sessionId },
-      include: {
-        participants: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                displayName: true,
-                avatarUrl: true,
-              },
-            },
-          },
-        },
-        segments: {
-          orderBy: {
-            startTime: 'asc',
-          },
-        },
-      },
-    })
-    return conversation
-  } catch (error) {
-    console.error('Error in getConversationBySessionId:', error)
-    throw new Error('Failed to get conversation by session ID')
-  }
-}
-
-export async function createConversation(
-  data: Omit<Conversation, 'id' | 'createdAt' | 'updatedAt'>,
-) {
+export async function createConversation(data: {
+  id: string
+  content: string
+  title?: string
+  summary?: string
+  category?: string
+}) {
   try {
     const conversation = await prisma.conversation.create({
       data,
       include: {
         participants: true,
-        segments: true,
       },
     })
     return conversation
@@ -102,7 +69,6 @@ export async function updateConversation(
             },
           },
         },
-        segments: true,
       },
     })
     return conversation
@@ -114,11 +80,6 @@ export async function updateConversation(
 
 export async function deleteConversation(id: string) {
   try {
-    // First delete all segments and participants
-    await prisma.conversationSegment.deleteMany({
-      where: { conversationId: id },
-    })
-
     await prisma.conversationParticipant.deleteMany({
       where: { conversationId: id },
     })
@@ -223,46 +184,6 @@ export async function updateParticipantRole(
   }
 }
 
-export async function addSegmentToConversation(
-  conversationId: string,
-  data: {
-    text: string
-    speaker: string
-    speakerId: number
-    isUser: boolean
-    startTime: number
-    endTime: number
-    participantId?: string
-  },
-) {
-  try {
-    const segment = await prisma.conversationSegment.create({
-      data: {
-        ...data,
-        conversationId,
-      },
-    })
-
-    // Update the participant's lastActive time and message count
-    if (data.participantId) {
-      await prisma.conversationParticipant.update({
-        where: { id: data.participantId },
-        data: {
-          lastActive: new Date(),
-          messageCount: {
-            increment: 1,
-          },
-        },
-      })
-    }
-
-    return segment
-  } catch (error) {
-    console.error('Error in addSegmentToConversation:', error)
-    throw new Error('Failed to add segment to conversation')
-  }
-}
-
 export async function getConversationsByUserId(userId: string) {
   try {
     const conversations = await prisma.conversation.findMany({
@@ -284,12 +205,6 @@ export async function getConversationsByUserId(userId: string) {
                 avatarUrl: true,
               },
             },
-          },
-        },
-        segments: {
-          take: 1,
-          orderBy: {
-            createdAt: 'desc',
           },
         },
       },
@@ -365,11 +280,7 @@ export async function searchConversations(query: string) {
         OR: [
           { title: { contains: query, mode: 'insensitive' } },
           { summary: { contains: query, mode: 'insensitive' } },
-          {
-            segments: {
-              some: { text: { contains: query, mode: 'insensitive' } },
-            },
-          },
+          { content: { contains: query, mode: 'insensitive' } },
         ],
       },
       include: {
@@ -383,12 +294,6 @@ export async function searchConversations(query: string) {
                 avatarUrl: true,
               },
             },
-          },
-        },
-        segments: {
-          take: 1,
-          orderBy: {
-            createdAt: 'desc',
           },
         },
       },

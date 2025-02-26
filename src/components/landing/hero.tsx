@@ -7,11 +7,23 @@ import Balancer from 'react-wrap-balancer'
 import AuthButton from '../buttons/authButton'
 import { type Conversation } from '@prisma/client'
 
+// Update the interface to include participants
+interface ConversationWithContent extends Conversation {
+  content: string;
+  category: string | null;
+  participants: Array<{
+    id: string;
+    role: string;
+    userId: string;
+  }>;
+}
+
 export function Hero() {
   const containerRef = useRef<HTMLDivElement>(null)
   const parentRef = useRef<HTMLDivElement>(null)
-  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [conversations, setConversations] = useState<ConversationWithContent[]>([])
   const [loading, setLoading] = useState(true)
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     async function fetchConversations() {
@@ -36,6 +48,18 @@ export function Hero() {
 
     fetchConversations()
   }, [])
+
+  const toggleExpand = (id: string) => {
+    setExpandedIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(id)) {
+        newSet.delete(id)
+      } else {
+        newSet.add(id)
+      }
+      return newSet
+    })
+  }
 
   return (
     <div
@@ -154,24 +178,63 @@ export function Hero() {
                 animate={{ opacity: 1, y: 0 }}
                 className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800"
               >
-                <h3 className="text-lg font-semibold">
-                  {conversation.title || `Conversation #${conversation.id}`}
-                </h3>
-                <p className="text-gray-600 dark:text-gray-300 mt-2">
-                  {conversation.content}
-                </p>
-                {conversation.summary && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    {conversation.summary}
-                  </p>
-                )}
-                <div className="flex justify-between items-center mt-3 text-xs text-gray-400">
-                  <span>
-                    {new Date(conversation.createdAt).toLocaleDateString()}
-                  </span>
-                  <span>
-                    Session: {conversation.sessionId}
-                  </span>
+                <div className="cursor-pointer">
+                  <div 
+                    onClick={() => toggleExpand(conversation.id)}
+                    className="flex items-center justify-between"
+                  >
+                    <h3 className="text-lg font-semibold">
+                      {conversation.title || `Conversation #${conversation.id}`}
+                    </h3>
+                    <span 
+                      className={`text-xl text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-transform duration-200 ${
+                        expandedIds.has(conversation.id) ? 'rotate-180' : ''
+                      }`}
+                    >
+                      ⌄
+                    </span>
+                  </div>
+
+                  <AnimatePresence>
+                    {expandedIds.has(conversation.id) ? (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="text-gray-600 dark:text-gray-300 mt-4">
+                          {conversation.content}
+                        </p>
+                        {conversation.summary && (
+                          <div className="mt-4">
+                            <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Summary:</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {conversation.summary}
+                            </p>
+                          </div>
+                        )}
+                        {conversation.category && (
+                          <div className="mt-2">
+                            <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Category:</h4>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              {conversation.category}
+                            </p>
+                          </div>
+                        )}
+                      </motion.div>
+                    ) : (
+                      <p className="text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
+                        {conversation.content}
+                      </p>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="flex justify-between items-center mt-3 text-xs text-gray-400">
+                    <span>{new Date(conversation.createdAt).toLocaleDateString()}</span>
+                    <span>Session: {conversation.sessionId}</span>
+                  </div>
                 </div>
               </motion.div>
             ))}

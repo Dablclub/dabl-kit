@@ -10,6 +10,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.38.0",
     "@calcom/embed-react": "^1.5.0",
     "@dynamic-labs/ethereum": "3.9.10",
     "@dynamic-labs/sdk-react-core": "3.9.10",

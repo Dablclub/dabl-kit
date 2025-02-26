@@ -5,10 +5,37 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import Balancer from 'react-wrap-balancer'
 import AuthButton from '../buttons/authButton'
+import { type Conversation } from '@prisma/client'
 
 export function Hero() {
   const containerRef = useRef<HTMLDivElement>(null)
   const parentRef = useRef<HTMLDivElement>(null)
+  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchConversations() {
+      try {
+        console.log('Making API request...')
+        const response = await fetch('/api/conversations')
+        console.log('API Response status:', response.status)
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        console.log('Received data:', data)
+        setConversations(data)
+      } catch (error) {
+        console.error('Error fetching conversations:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchConversations()
+  }, [])
 
   return (
     <div
@@ -107,6 +134,53 @@ export function Hero() {
           className="text-lg font-semibold"
         />
       </motion.div>
+      
+      <motion.div 
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-4xl p-4"
+      >
+        <h2 className="text-2xl font-bold mb-6">OMI CONVERSATIONS:</h2>
+
+        {loading ? (
+          <div className="text-center py-10">Loading conversations...</div>
+        ) : conversations.length > 0 ? (
+          <div className="space-y-4">
+            {conversations.map((conversation) => (
+              <motion.div
+                key={conversation.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-white dark:bg-gray-800"
+              >
+                <h3 className="text-lg font-semibold">
+                  {conversation.title || `Conversation #${conversation.id}`}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-300 mt-2">
+                  {conversation.content}
+                </p>
+                {conversation.summary && (
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                    {conversation.summary}
+                  </p>
+                )}
+                <div className="flex justify-between items-center mt-3 text-xs text-gray-400">
+                  <span>
+                    {new Date(conversation.createdAt).toLocaleDateString()}
+                  </span>
+                  <span>
+                    Session: {conversation.sessionId}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-10">No conversations found.</div>
+        )}
+      </motion.div>
+
       {/* <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

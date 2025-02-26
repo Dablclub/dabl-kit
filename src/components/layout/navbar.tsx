@@ -251,7 +251,9 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
 
                 <AuthButton className="block w-1/2 px-4 text-lg md:hidden" />
               </div>
-              <ModeToggle />
+              <div className="flex w-full justify-center">
+                <ModeToggle />
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

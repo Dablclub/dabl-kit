@@ -48,7 +48,7 @@ export default function OnchainProvider({ children }: { children: ReactNode }) {
     onAuthSuccess: async ({ user }) => {
       const { email, appWallet, extWallet } = getDynamicCredentials(user)
 
-      if (!user || !user.userId || !user.username || !extWallet) {
+      if (!user || !user.userId || !user.username || !appWallet) {
         console.error(
           'Missing args from onAuthSuccess event, please check Dynamic/onchainProvider',
         )

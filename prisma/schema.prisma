@@ -539,16 +539,15 @@ model UserQuest {
 }
 
 model Conversation {
-  id                          String                @id @default(uuid())
-  sessionId                   String
-  participants                ConversationParticipant[]
-  content                     String                // This field exists in schema
-  title                       String?               
-  summary                     String?               
-  category                    String?               
-
-  createdAt                   DateTime              @default(now())
-  updatedAt                   DateTime              @updatedAt
+  id            String      @id @default(uuid())
+  sessionId     String
+  content       String      // Make sure this exists
+  title         String?
+  summary       String?
+  category      String?
+  participants  ConversationParticipant[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@index([sessionId, title])
 }

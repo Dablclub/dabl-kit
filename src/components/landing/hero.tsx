@@ -5,23 +5,17 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import Balancer from 'react-wrap-balancer'
 import AuthButton from '../buttons/authButton'
-import { type Conversation } from '@prisma/client'
+import { type Conversation, type ConversationParticipant } from '@prisma/client'
 
-// Update the interface to include participants
-interface ConversationWithContent extends Conversation {
-  content: string;
-  category: string | null;
-  participants: Array<{
-    id: string;
-    role: string;
-    userId: string;
-  }>;
+// Update interface to match Prisma schema exactly
+interface ConversationWithParticipants extends Conversation {
+  participants: ConversationParticipant[];
 }
 
 export function Hero() {
   const containerRef = useRef<HTMLDivElement>(null)
   const parentRef = useRef<HTMLDivElement>(null)
-  const [conversations, setConversations] = useState<ConversationWithContent[]>([])
+  const [conversations, setConversations] = useState<ConversationWithParticipants[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
 
@@ -37,7 +31,7 @@ export function Hero() {
         }
         
         const data = await response.json()
-        console.log('Received data:', data)
+        console.log('First conversation:', data[0]) // Debug log to see the data structure
         setConversations(data)
       } catch (error) {
         console.error('Error fetching conversations:', error)
@@ -204,25 +198,23 @@ export function Hero() {
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                       >
-                        <p className="text-gray-600 dark:text-gray-300 mt-4">
-                          {conversation.content}
-                        </p>
-                        {conversation.summary && (
-                          <div className="mt-4">
-                            <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Summary:</h4>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {conversation.summary}
+                        <div className="mt-4 space-y-4">
+                          <div>
+                            <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Content:</h4>
+                            <p className="text-gray-600 dark:text-gray-300 mt-2 whitespace-pre-wrap">
+                              {conversation.content}
                             </p>
                           </div>
-                        )}
-                        {conversation.category && (
-                          <div className="mt-2">
-                            <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Category:</h4>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {conversation.category}
-                            </p>
-                          </div>
-                        )}
+
+                          {conversation.summary && (
+                            <div>
+                              <h4 className="font-medium text-sm text-gray-700 dark:text-gray-300">Summary:</h4>
+                              <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {conversation.summary}
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </motion.div>
                     ) : (
                       <p className="text-gray-600 dark:text-gray-300 mt-2 line-clamp-2">
@@ -233,7 +225,7 @@ export function Hero() {
 
                   <div className="flex justify-between items-center mt-3 text-xs text-gray-400">
                     <span>{new Date(conversation.createdAt).toLocaleDateString()}</span>
-                    <span>Session: {conversation.sessionId}</span>
+                    <span>Participants: {conversation.participants.length}</span>
                   </div>
                 </div>
               </motion.div>

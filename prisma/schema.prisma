@@ -23,10 +23,10 @@ enum RoleCategory {
 
 model User {
     id                        String          @id @default(uuid())
-    appWallet                 String          @unique
+    appWallet                 String?         @unique
     username                  String          @unique
     displayName               String
-    extWallet                 String          @unique
+    extWallet                 String?         @unique
     email                     String?         @unique
     bio                       String?
     website                   String?

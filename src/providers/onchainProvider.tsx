@@ -9,7 +9,7 @@ import {
 import { EthereumWalletConnectors } from '@dynamic-labs/ethereum'
 import { DynamicWagmiConnector } from '@dynamic-labs/wagmi-connector'
 import { createConfig, WagmiProvider } from 'wagmi'
-import { Address, http } from 'viem'
+import { http } from 'viem'
 import { mainnet, polygon, polygonAmoy } from 'viem/chains'
 import { walletConnect } from 'wagmi/connectors'
 import { useRouter } from 'next/navigation'
@@ -46,9 +46,10 @@ export default function OnchainProvider({ children }: { children: ReactNode }) {
 
   const events: DynamicEventsCallbacks = {
     onAuthSuccess: async ({ user }) => {
+      console.log('onAuthSuccess was called', user)
       const { email, appWallet, extWallet } = getDynamicCredentials(user)
 
-      if (!user || !user.userId || !user.username || !appWallet) {
+      if (!user || !user.userId || !user.username) {
         console.error(
           'Missing args from onAuthSuccess event, please check Dynamic/onchainProvider',
         )
@@ -57,8 +58,8 @@ export default function OnchainProvider({ children }: { children: ReactNode }) {
       try {
         const fetchedUser = await loginUser({
           dynamicUserId: user.userId,
-          appWallet: appWallet as Address,
-          extWallet: extWallet as Address,
+          appWallet,
+          extWallet,
           email,
           username: user.username,
         })

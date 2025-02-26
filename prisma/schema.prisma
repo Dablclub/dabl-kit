@@ -542,10 +542,10 @@ model Conversation {
   id                          String                @id @default(uuid())
   sessionId                   String
   participants                ConversationParticipant[]
-  content                     String
-  title                       String?               // Optional conversation title
-  summary                     String?               // Optional AI-generated summary
-  category                    String?               // Optional category
+  content                     String                // This field exists in schema
+  title                       String?               
+  summary                     String?               
+  category                    String?               
 
   createdAt                   DateTime              @default(now())
   updatedAt                   DateTime              @updatedAt

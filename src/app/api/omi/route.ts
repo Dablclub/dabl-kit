@@ -24,6 +24,7 @@ let in_note = false
 
 export async function POST(request: Request) {
   const response = await request.json()
+  console.log('response from omi post route >>>', response)
 
   for (const segment of response.segments) {
     const lowerText = segment.text.toLowerCase()

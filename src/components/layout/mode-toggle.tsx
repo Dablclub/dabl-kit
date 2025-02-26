@@ -21,7 +21,6 @@ export function ModeToggle() {
   }, [])
 
   const SWITCH = () => {
-    console.log(theme)
     switch (theme) {
       case 'light':
         setTheme('dark')
@@ -40,7 +39,7 @@ export function ModeToggle() {
   return (
     <button
       onClick={SWITCH}
-      className="hover:shadow-input relative flex cursor-pointer items-center justify-center rounded-xl p-2 text-neutral-500 dark:text-neutral-500"
+      className="relative flex cursor-pointer items-center justify-center rounded-xl p-2 text-neutral-500 hover:shadow-input dark:text-neutral-500"
     >
       <SunIcon
         size={16}

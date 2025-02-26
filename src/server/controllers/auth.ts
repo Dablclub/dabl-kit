@@ -2,9 +2,9 @@ import prisma from '@/server/prismaClient'
 
 interface GetOrCreateUserType {
   dynamicUserId: string
-  appWallet: string
+  appWallet?: string
   email?: string
-  extWallet: string
+  extWallet?: string
   username: string
 }
 

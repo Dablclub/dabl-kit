@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       in_note = false
 
       await createConversation({
-        id: response.session_id as string,
+        sessionId: response.session_id as string,
         content: content.trim(),
       })
 

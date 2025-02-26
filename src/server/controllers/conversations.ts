@@ -28,7 +28,7 @@ export async function getConversationById(id: string) {
 }
 
 export async function createConversation(data: {
-  id: string
+  sessionId: string
   content: string
   title?: string
   summary?: string

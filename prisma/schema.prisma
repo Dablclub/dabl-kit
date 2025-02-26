@@ -539,7 +539,8 @@ model UserQuest {
 }
 
 model Conversation {
-  id                          String                @id
+  id                          String                @id @default(uuid())
+  sessionId                   String
   participants                ConversationParticipant[]
   content                     String
   title                       String?               // Optional conversation title
@@ -549,7 +550,7 @@ model Conversation {
   createdAt                   DateTime              @default(now())
   updatedAt                   DateTime              @updatedAt
 
-  @@index([title])
+  @@index([sessionId, title])
 }
 
 model ConversationParticipant {

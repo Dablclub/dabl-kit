@@ -14,7 +14,6 @@
     "@dynamic-labs/ethereum": "3.9.10",
     "@dynamic-labs/sdk-react-core": "3.9.10",
     "@dynamic-labs/wagmi-connector": "3.9.10",
-    "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^4.1.1",
     "@prisma/client": "^6.4.1",
     "@radix-ui/react-avatar": "^1.1.3",

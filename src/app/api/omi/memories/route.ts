@@ -123,6 +123,7 @@ export async function POST(request: NextRequest) {
         status: memoryData.status,
         uid,
         participants: [],
+        participantPlatform: [],
       },
     })
 

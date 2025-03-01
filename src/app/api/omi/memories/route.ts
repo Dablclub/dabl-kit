@@ -55,6 +55,7 @@ interface MemoryCreation {
   visibility: string
   processing_memory_id: string | null
   status: string
+  uid?: string
 }
 
 interface AgentResponse {
@@ -120,6 +121,7 @@ export async function POST(request: NextRequest) {
         visibility: memoryData.visibility,
         processingMemoryId: memoryData.processing_memory_id,
         status: memoryData.status,
+        uid,
       },
     })
 

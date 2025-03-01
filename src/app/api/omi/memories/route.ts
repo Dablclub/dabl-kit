@@ -1,3 +1,4 @@
+import { createMemory } from '@/server/controllers/memories'
 import { NextRequest, NextResponse } from 'next/server'
 
 interface TranscriptSegment {
@@ -92,6 +93,35 @@ export async function POST(request: NextRequest) {
         { status: 400 },
       )
     }
+
+    // Transform the memoryData to match the expected structure for createMemory
+    await createMemory({
+      memory: {
+        id: memoryData.id,
+        startedAt: new Date(memoryData.started_at),
+        finishedAt: new Date(memoryData.finished_at),
+        createdAt: new Date(memoryData.created_at),
+        source: memoryData.source,
+        language: memoryData.language,
+        structured: JSON.parse(JSON.stringify(memoryData.structured)),
+        transcriptSegments: JSON.parse(
+          JSON.stringify(memoryData.transcript_segments),
+        ),
+        geolocation: JSON.parse(JSON.stringify(memoryData.geolocation)),
+        photos: memoryData.photos,
+        pluginsResults: memoryData.plugins_results
+          ? JSON.parse(JSON.stringify(memoryData.plugins_results))
+          : null,
+        externalData: memoryData.external_data
+          ? JSON.parse(JSON.stringify(memoryData.external_data))
+          : null,
+        discarded: memoryData.discarded,
+        deleted: memoryData.deleted,
+        visibility: memoryData.visibility,
+        processingMemoryId: memoryData.processing_memory_id,
+        status: memoryData.status,
+      },
+    })
 
     const formattedTranscript = memoryData.transcript_segments
       .map((segment) => `${segment.speaker}: ${segment.text}`)

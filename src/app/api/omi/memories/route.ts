@@ -146,6 +146,13 @@ export async function POST(request: NextRequest) {
 
     console.log('agentRequestBody:', agentRequestBody)
 
+    console.log(
+      'process.env.SERVER_ENDPOINT:',
+      process.env.SERVER_ENDPOINT,
+      'process.env.AGENT_ID_EVALUATOR:',
+      process.env.AGENT_ID_EVALUATOR,
+    )
+
     const response = await fetch(
       `${process.env.SERVER_ENDPOINT}/${process.env.AGENT_ID_EVALUATOR}/message`,
       {

@@ -118,8 +118,7 @@ export async function createMemory(data: {
   try {
     const { memory, userId } = data
 
-    // Create a properly typed input object for Prisma
-    const createData: Prisma.MemoryCreateInput = {
+    let createData: Prisma.MemoryCreateInput = {
       id: memory.id,
       startedAt: memory.startedAt,
       finishedAt: memory.finishedAt,
@@ -136,9 +135,14 @@ export async function createMemory(data: {
       visibility: memory.visibility,
       processingMemoryId: memory.processingMemoryId,
       status: memory.status,
-      user: {
-        connect: { id: userId },
-      },
+    }
+    if (userId) {
+      createData = {
+        ...createData,
+        user: {
+          connect: { id: userId },
+        },
+      }
     }
 
     const newMemory = await prisma.memory.create({

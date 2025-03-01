@@ -38,6 +38,8 @@ import {
 import { Memory } from '@prisma/client'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import AddContactModal from '@/components/modals/add-contact-modal'
+
 const actions = [
   {
     label: 'Burn',
@@ -231,9 +233,8 @@ export default function MemoriesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[300px]">Content</TableHead>
-                  <TableHead className="w-[120px]">UID</TableHead>
                   <TableHead className="w-[180px]">Created At</TableHead>
-                  <TableHead className="w-[100px]">Source</TableHead>
+                  <TableHead className="w-[100px]">Participants</TableHead>
                   <TableHead className="w-[100px]">Visibility</TableHead>
                   <TableHead className="w-[150px]">Actions</TableHead>
                   <TableHead className="w-[100px]">Controls</TableHead>
@@ -258,7 +259,14 @@ export default function MemoriesPage() {
                       <TableCell>
                         {format(new Date(memory.createdAt), 'PPp')}
                       </TableCell>
-                      <TableCell>{memory.source}</TableCell>
+                      <TableCell>
+                        {!memory.participants ||
+                        memory.participants.length === 0 ? (
+                          <AddContactModal />
+                        ) : (
+                          memory.participants[0]
+                        )}
+                      </TableCell>
                       <TableCell>{memory.visibility}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">

@@ -122,6 +122,7 @@ export async function POST(request: NextRequest) {
         processingMemoryId: memoryData.processing_memory_id,
         status: memoryData.status,
         uid,
+        participants: [],
       },
     })
 

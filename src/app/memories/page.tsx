@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, Brain, Flame } from 'lucide-react'
+import { Loader2, Brain, Flame, MessagesSquare } from 'lucide-react'
 import { Memory } from '@prisma/client'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -175,8 +175,6 @@ export default function MemoriesPage() {
                   <TableHead className="w-[300px]">Content</TableHead>
                   <TableHead className="w-[120px]">UID</TableHead>
                   <TableHead className="w-[180px]">Created At</TableHead>
-                  <TableHead className="w-[100px]">Source</TableHead>
-                  <TableHead className="w-[100px]">Visibility</TableHead>
                   <TableHead className="w-[150px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -199,10 +197,16 @@ export default function MemoriesPage() {
                       <TableCell>
                         {format(new Date(memory.createdAt), 'PPp')}
                       </TableCell>
-                      <TableCell>{memory.source}</TableCell>
-                      <TableCell>{memory.visibility}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleLike(memory.id)}
+                          >
+                            <MessagesSquare className="mr-1 h-4 w-4" />
+                            Reply
+                          </Button>
                           <Button
                             variant="outline"
                             size="sm"

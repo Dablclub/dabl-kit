@@ -52,7 +52,7 @@ export async function getProjects(
 export async function getProjectById(
   id: string,
   authToken?: string,
-): Promise<Project> {
+): Promise<{ project: Project }> {
   try {
     const response = await fetch(`/api/projects/${id}`, {
       headers: {

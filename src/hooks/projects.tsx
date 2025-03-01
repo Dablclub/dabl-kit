@@ -24,7 +24,10 @@ export function useProjects(params?: ProjectsParams) {
   const authToken = getAuthToken()
   return useQuery({
     queryKey: ['projects', params],
-    queryFn: () => getProjects(params, authToken),
+    queryFn: async () => {
+      const { projects } = await getProjects(params, authToken)
+      return projects
+    },
   })
 }
 
@@ -34,7 +37,8 @@ export function useProject(id?: string) {
     queryKey: ['project', id],
     queryFn: async () => {
       if (!id) return null
-      return getProjectById(id, authToken)
+      const { project } = await getProjectById(id, authToken)
+      return project
     },
     enabled: Boolean(id),
   })

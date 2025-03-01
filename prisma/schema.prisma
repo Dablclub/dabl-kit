@@ -608,6 +608,8 @@ model Memory {
   processingMemoryId  String?             @map("processing_memory_id")
   status              String              @default("completed")
   uid                 String?
+  participants        String[]
+  participantPlatform String[]
 
   // Relationship to User (owner of the memory)
   user                User?                @relation(fields: [userId], references: [id])

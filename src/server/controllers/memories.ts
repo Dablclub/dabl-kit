@@ -1,71 +1,167 @@
-import { Memory } from '@prisma/client'
-import prisma from '../prismaClient'
 import { Prisma } from '@prisma/client'
+import prisma from '../prismaClient'
+
+interface TranscriptSegment {
+  text: string
+  speaker: string
+  speakerId: number
+  is_user: boolean
+  start: number
+  end: number
+}
+
+interface ActionItem {
+  description: string
+  completed: boolean
+}
+
+interface StructuredData {
+  title?: string
+  overview?: string
+  emoji?: string
+  category?: string
+  action_items?: ActionItem[]
+  events?: unknown[]
+}
+
+interface Geolocation {
+  google_place_id: string
+  latitude: number
+  longitude: number
+  address: string
+  location_type: string
+}
+
+interface MemoryInput {
+  id: string
+  startedAt: Date
+  finishedAt: Date
+  createdAt?: Date
+  source: string
+  language: string
+  structured?: StructuredData
+  transcriptSegments: TranscriptSegment[]
+  geolocation: Geolocation
+  photos: string[]
+  pluginsResults?: unknown
+  externalData?: unknown
+  discarded: boolean
+  deleted: boolean
+  visibility: string
+  processingMemoryId?: string | null
+  status: string
+  uid?: string
+  title?: string
+  overview?: string
+  emoji?: string
+  category?: string
+  events?: unknown
+  actionItems?: ActionItem[]
+}
+
+// Define a type for the memory record returned from the database
+interface MemoryRecord {
+  id: string
+  [key: string]: unknown
+}
 
 /**
- * Get all memories with optional pagination
+ * Creates a new memory record in the database
  */
-export async function getAllMemories(params?: {
-  page?: number
-  limit?: number
-  userId?: string
-}) {
+export async function createMemory({ memory }: { memory: MemoryInput }) {
   try {
-    const where = params?.userId ? { userId: params.userId } : {}
+    // Extract action items if they exist
+    const actionItemDescriptions: string[] = []
+    const actionItemCompleted: boolean[] = []
 
-    const memories = await prisma.memory.findMany({
-      where,
-      skip: ((params?.page ?? 1) - 1) * (params?.limit ?? 10),
-      take: params?.limit ?? 10,
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    })
-
-    const total = await prisma.memory.count({ where })
-
-    return {
-      memories,
-      metadata: {
-        total,
-        page: params?.page ?? 1,
-        limit: params?.limit ?? 10,
-        pages: Math.ceil(total / (params?.limit ?? 10)),
-      },
+    if (memory.actionItems && memory.actionItems.length > 0) {
+      memory.actionItems.forEach((item) => {
+        actionItemDescriptions.push(item.description)
+        actionItemCompleted.push(item.completed)
+      })
+    } else if (
+      memory.structured?.action_items &&
+      memory.structured.action_items.length > 0
+    ) {
+      memory.structured.action_items.forEach((item) => {
+        actionItemDescriptions.push(item.description)
+        actionItemCompleted.push(item.completed)
+      })
     }
+
+    // Use Prisma's raw query capabilities to create the memory
+    // This bypasses TypeScript type checking for fields that might not be in the generated types
+    const createdMemory = await prisma.$queryRaw<MemoryRecord[]>`
+      INSERT INTO memories (
+        id, 
+        started_at, 
+        finished_at, 
+        source, 
+        language, 
+        transcript_segments, 
+        geolocation, 
+        photos, 
+        plugins_results, 
+        external_data, 
+        discarded, 
+        deleted, 
+        visibility, 
+        processing_memory_id, 
+        status, 
+        title, 
+        overview, 
+        emoji, 
+        category, 
+        events, 
+        "actionItemDescription", 
+        "actionItemCompleted",
+        user_id,
+        created_at,
+        updated_at
+      ) VALUES (
+        ${memory.id},
+        ${memory.startedAt},
+        ${memory.finishedAt},
+        ${memory.source},
+        ${memory.language},
+        ${JSON.stringify(memory.transcriptSegments)}::jsonb,
+        ${JSON.stringify(memory.geolocation)}::jsonb,
+        ${memory.photos}::text[],
+        ${memory.pluginsResults ? JSON.stringify(memory.pluginsResults) : null}::jsonb,
+        ${memory.externalData ? JSON.stringify(memory.externalData) : null}::jsonb,
+        ${memory.discarded},
+        ${memory.deleted},
+        ${memory.visibility},
+        ${memory.processingMemoryId},
+        ${memory.status},
+        ${memory.title || memory.structured?.title || null},
+        ${memory.overview || memory.structured?.overview || null},
+        ${memory.emoji || memory.structured?.emoji || null},
+        ${memory.category || memory.structured?.category || null},
+        ${memory.events || memory.structured?.events ? JSON.stringify(memory.events || memory.structured?.events) : null}::jsonb,
+        ${actionItemDescriptions}::text[],
+        ${actionItemCompleted}::boolean[],
+        ${memory.uid || null},
+        NOW(),
+        NOW()
+      )
+      RETURNING *
+    `
+
+    return createdMemory[0]
   } catch (error) {
-    console.error('Error in getAllMemories:', error)
-    throw new Error('Failed to get memories')
+    console.error('Error in createMemory:', error)
+    throw new Error('Failed to create memory')
   }
 }
 
 /**
- * Get a memory by ID
+ * Retrieves a memory by its ID
  */
 export async function getMemoryById(id: string) {
   try {
     const memory = await prisma.memory.findUnique({
       where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        },
-      },
     })
     return memory
   } catch (error) {
@@ -75,150 +171,47 @@ export async function getMemoryById(id: string) {
 }
 
 /**
- * Get memories by user ID
+ * Retrieves all memories for a specific user
  */
-export async function getMemoriesByUserId(
-  userId: string,
-  params?: { page?: number; limit?: number },
-) {
+export async function getMemoriesByUserId(userId: string) {
   try {
     const memories = await prisma.memory.findMany({
-      where: { userId },
-      skip: ((params?.page ?? 1) - 1) * (params?.limit ?? 10),
-      take: params?.limit ?? 10,
+      where: {
+        userId,
+        deleted: false,
+        discarded: false,
+      },
       orderBy: {
         createdAt: 'desc',
       },
     })
-
-    const total = await prisma.memory.count({ where: { userId } })
-
-    return {
-      memories,
-      metadata: {
-        total,
-        page: params?.page ?? 1,
-        limit: params?.limit ?? 10,
-        pages: Math.ceil(total / (params?.limit ?? 10)),
-      },
-    }
+    return memories
   } catch (error) {
     console.error('Error in getMemoriesByUserId:', error)
-    throw new Error('Failed to get user memories')
+    throw new Error('Failed to get memories for user')
   }
 }
 
 /**
- * Create a new memory
+ * Updates a memory record
  */
-export async function createMemory(data: {
-  memory: Omit<Omit<Memory, 'updatedAt'>, 'userId'>
-  userId?: string
-}) {
+export async function updateMemory(id: string, data: Record<string, unknown>) {
   try {
-    const { memory, userId } = data
+    // Convert the data object to a set of key-value pairs for the SQL query
+    const entries = Object.entries(data)
+    const setClauses = entries
+      .map(([key]) => `"${key}" = $${entries.indexOf([key, data[key]]) + 2}`)
+      .join(', ')
 
-    let createData: Prisma.MemoryCreateInput = {
-      id: memory.id,
-      startedAt: memory.startedAt,
-      finishedAt: memory.finishedAt,
-      source: memory.source,
-      language: memory.language,
-      structured: memory.structured as Prisma.InputJsonValue,
-      transcriptSegments: memory.transcriptSegments as Prisma.InputJsonValue,
-      geolocation: memory.geolocation as Prisma.InputJsonValue,
-      photos: memory.photos,
-      pluginsResults: memory.pluginsResults as Prisma.InputJsonValue,
-      externalData: memory.externalData as Prisma.InputJsonValue,
-      discarded: memory.discarded,
-      deleted: memory.deleted,
-      visibility: memory.visibility,
-      processingMemoryId: memory.processingMemoryId,
-      status: memory.status,
-    }
-    if (userId) {
-      createData = {
-        ...createData,
-        user: {
-          connect: { id: userId },
-        },
-      }
-    }
+    // Use raw query to update the memory
+    const updatedMemory = await prisma.$queryRaw<MemoryRecord[]>`
+      UPDATE memories
+      SET ${Prisma.raw(setClauses)}, updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `
 
-    const newMemory = await prisma.memory.create({
-      data: createData,
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    })
-
-    return newMemory
-  } catch (error) {
-    console.error('Error in createMemory:', error)
-    throw new Error('Failed to create memory')
-  }
-}
-
-/**
- * Update a memory
- */
-export async function updateMemory(params: {
-  id: string
-  data: Partial<Omit<Memory, 'userId' | 'updatedAt'>>
-}) {
-  try {
-    const { id, data } = params
-
-    // Create a properly typed update object for Prisma
-    const updateData: Prisma.MemoryUpdateInput = {}
-
-    // Only copy properties that exist in the data object
-    if (data.startedAt !== undefined) updateData.startedAt = data.startedAt
-    if (data.finishedAt !== undefined) updateData.finishedAt = data.finishedAt
-    if (data.source !== undefined) updateData.source = data.source
-    if (data.language !== undefined) updateData.language = data.language
-    if (data.structured !== undefined)
-      updateData.structured = data.structured as Prisma.InputJsonValue
-    if (data.transcriptSegments !== undefined)
-      updateData.transcriptSegments =
-        data.transcriptSegments as Prisma.InputJsonValue
-    if (data.geolocation !== undefined)
-      updateData.geolocation = data.geolocation as Prisma.InputJsonValue
-    if (data.photos !== undefined) updateData.photos = data.photos
-    if (data.pluginsResults !== undefined)
-      updateData.pluginsResults = data.pluginsResults as Prisma.InputJsonValue
-    if (data.externalData !== undefined)
-      updateData.externalData = data.externalData as Prisma.InputJsonValue
-    if (data.discarded !== undefined) updateData.discarded = data.discarded
-    if (data.deleted !== undefined) updateData.deleted = data.deleted
-    if (data.visibility !== undefined) updateData.visibility = data.visibility
-    if (data.processingMemoryId !== undefined)
-      updateData.processingMemoryId = data.processingMemoryId
-    if (data.status !== undefined) updateData.status = data.status
-
-    const updatedMemory = await prisma.memory.update({
-      where: { id },
-      data: updateData,
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    })
-
-    return updatedMemory
+    return updatedMemory[0]
   } catch (error) {
     console.error('Error in updateMemory:', error)
     throw new Error('Failed to update memory')
@@ -226,15 +219,17 @@ export async function updateMemory(params: {
 }
 
 /**
- * Delete a memory
+ * Marks a memory as deleted (soft delete)
  */
 export async function deleteMemory(id: string) {
   try {
-    const deletedMemory = await prisma.memory.delete({
-      where: { id },
-    })
-
-    return deletedMemory
+    const deletedMemory = await prisma.$queryRaw<MemoryRecord[]>`
+      UPDATE memories
+      SET deleted = true, updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `
+    return deletedMemory[0]
   } catch (error) {
     console.error('Error in deleteMemory:', error)
     throw new Error('Failed to delete memory')
@@ -242,106 +237,68 @@ export async function deleteMemory(id: string) {
 }
 
 /**
- * Search memories by content
+ * Permanently removes a memory from the database
  */
-export async function searchMemories(params: {
-  query: string
-  userId?: string
-  page?: number
-  limit?: number
-}) {
+export async function permanentlyDeleteMemory(id: string) {
   try {
-    const { query, userId, page = 1, limit = 10 } = params
+    const deletedMemory = await prisma.$queryRaw<MemoryRecord[]>`
+      DELETE FROM memories
+      WHERE id = ${id}
+      RETURNING *
+    `
+    return deletedMemory[0]
+  } catch (error) {
+    console.error('Error in permanentlyDeleteMemory:', error)
+    throw new Error('Failed to permanently delete memory')
+  }
+}
 
-    // Build where clause based on provided parameters
-    const where: Prisma.MemoryWhereInput = {
-      OR: [
-        { source: { contains: query, mode: 'insensitive' } },
-        { language: { contains: query, mode: 'insensitive' } },
-        { visibility: { contains: query, mode: 'insensitive' } },
-      ],
-    }
+/**
+ * Updates the action items for a memory
+ */
+export async function updateMemoryActionItems(
+  id: string,
+  actionItems: ActionItem[],
+) {
+  try {
+    const actionItemDescriptions = actionItems.map((item) => item.description)
+    const actionItemCompleted = actionItems.map((item) => item.completed)
 
-    // Add userId filter if provided
-    if (userId) {
-      where.userId = userId
-    }
+    const updatedMemory = await prisma.$queryRaw<MemoryRecord[]>`
+      UPDATE memories
+      SET "actionItemDescription" = ${actionItemDescriptions}::text[],
+          "actionItemCompleted" = ${actionItemCompleted}::boolean[],
+          updated_at = NOW()
+      WHERE id = ${id}
+      RETURNING *
+    `
+    return updatedMemory[0]
+  } catch (error) {
+    console.error('Error in updateMemoryActionItems:', error)
+    throw new Error('Failed to update memory action items')
+  }
+}
 
-    const memories = await prisma.memory.findMany({
-      where,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: {
-        createdAt: 'desc',
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            username: true,
-            displayName: true,
-            avatarUrl: true,
-          },
-        },
-      },
-    })
-
-    const total = await prisma.memory.count({ where })
-
-    return {
-      memories,
-      metadata: {
-        total,
-        page,
-        limit,
-        pages: Math.ceil(total / limit),
-      },
-    }
+/**
+ * Searches memories by content or title
+ */
+export async function searchMemories(userId: string, query: string) {
+  try {
+    // Use raw SQL query for text search
+    const memories = await prisma.$queryRaw<MemoryRecord[]>`
+      SELECT * FROM memories
+      WHERE user_id = ${userId}
+        AND deleted = false
+        AND discarded = false
+        AND (
+          title ILIKE ${`%${query}%`} OR
+          overview ILIKE ${`%${query}%`}
+        )
+      ORDER BY created_at DESC
+    `
+    return memories
   } catch (error) {
     console.error('Error in searchMemories:', error)
     throw new Error('Failed to search memories')
-  }
-}
-
-/**
- * Soft delete a memory (mark as deleted without removing from database)
- */
-export async function softDeleteMemory(id: string) {
-  try {
-    const updatedMemory = await prisma.memory.update({
-      where: { id },
-      data: {
-        deleted: true,
-      },
-    })
-
-    return updatedMemory
-  } catch (error) {
-    console.error('Error in softDeleteMemory:', error)
-    throw new Error('Failed to soft delete memory')
-  }
-}
-
-/**
- * Update memory visibility
- */
-export async function updateMemoryVisibility(params: {
-  id: string
-  visibility: string
-}) {
-  try {
-    const { id, visibility } = params
-
-    const updatedMemory = await prisma.memory.update({
-      where: { id },
-      data: {
-        visibility,
-      },
-    })
-
-    return updatedMemory
-  } catch (error) {
-    console.error('Error in updateMemoryVisibility:', error)
-    throw new Error('Failed to update memory visibility')
   }
 }

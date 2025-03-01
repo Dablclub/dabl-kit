@@ -46,6 +46,7 @@ model User {
     votes                     Vote[]
     claimedBadges             UserBadge[]
     conversationParticipants  ConversationParticipant[]
+    memories                  Memory[]
 
     // E-HRBAC-T relationships
     roles                     UserRole[]
@@ -585,4 +586,36 @@ enum ParticipantRole {
   MEMBER
   OBSERVER
   BOT
+}
+
+// Memory model for storing data from external server
+model Memory {
+  id                  String              @id
+
+  startedAt           DateTime            @map("started_at")
+  finishedAt          DateTime            @map("finished_at")
+  source              String
+  language            String
+  structured          Json                // For structured data
+  transcriptSegments  Json                // Array of transcript segments
+  geolocation         Json                // Geolocation object
+  photos              String[]            // Array of photo URLs
+  pluginsResults      Json?               @map("plugins_results") // Optional array of plugin results
+  externalData        Json?               @map("external_data")   // Optional external data
+  discarded           Boolean             @default(false)
+  deleted             Boolean             @default(false)
+  visibility          String              @default("private")
+  processingMemoryId  String?             @map("processing_memory_id")
+  status              String              @default("completed")
+
+  // Relationship to User (owner of the memory)
+  user                User?                @relation(fields: [userId], references: [id])
+  userId              String?
+
+  // Timestamps
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+
+  @@index([userId])
+  @@map("memories")
 }

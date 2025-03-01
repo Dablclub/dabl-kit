@@ -20,8 +20,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2 } from 'lucide-react'
+import { HandCoins, Loader2, Megaphone, Briefcase } from 'lucide-react'
 import { Project } from '@prisma/client'
+import { toast } from 'sonner'
 
 export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -86,6 +87,11 @@ export default function ProjectsPage() {
     setCurrentPage(0) // Reset to first page on new search
   }
 
+  const handlePowerUp = (projectId: string, powerUp: string) => {
+    console.log(`Powering up project ${projectId} with ${powerUp}`)
+    toast.info(`${powerUp} initiated`)
+  }
+
   if (error) {
     return (
       <div className="p-8 text-red-500">
@@ -146,6 +152,7 @@ export default function ProjectsPage() {
                   <TableHead>Resources</TableHead>
                   <TableHead>Stage</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Power</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -166,6 +173,37 @@ export default function ProjectsPage() {
                       <TableCell>{getResourceLink(project)}</TableCell>
                       <TableCell>{project.stage}</TableCell>
                       <TableCell>{project.category || 'N/A'}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col items-center space-y-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handlePowerUp(project.id, 'Influencer Mode')
+                            }
+                          >
+                            <Megaphone className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handlePowerUp(project.id, 'Builder Mode')
+                            }
+                          >
+                            <Briefcase className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handlePowerUp(project.id, 'Fundraising mode')
+                            }
+                          >
+                            <HandCoins className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : (

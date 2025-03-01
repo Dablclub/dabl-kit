@@ -20,10 +20,70 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Loader2, Brain, Flame } from 'lucide-react'
+import {
+  Loader2,
+  Brain,
+  Flame,
+  Blocks,
+  Calendar,
+  CheckSquare,
+  Code,
+  CreditCard,
+  FileText,
+  Mail,
+  Phone,
+  Search,
+  Users,
+} from 'lucide-react'
 import { Memory } from '@prisma/client'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+const actions = [
+  {
+    label: 'Burn',
+    icon: Flame,
+  },
+  {
+    label: 'Email',
+    icon: Mail,
+  },
+  {
+    label: 'Schedule',
+    icon: Calendar,
+  },
+  {
+    label: 'Build',
+    icon: Blocks,
+  },
+  {
+    label: 'Pay',
+    icon: CreditCard,
+  },
+  {
+    label: 'Invoice',
+    icon: FileText,
+  },
+  {
+    label: 'Task',
+    icon: CheckSquare,
+  },
+  {
+    label: 'Call',
+    icon: Phone,
+  },
+  {
+    label: 'Research',
+    icon: Search,
+  },
+  {
+    label: 'Code',
+    icon: Code,
+  },
+  {
+    label: 'Meeting',
+    icon: Users,
+  },
+]
 
 export default function MemoriesPage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -105,16 +165,14 @@ export default function MemoriesPage() {
     setCurrentPage(1) // Reset to first page on new search
   }
 
-  const handleLike = (id: string) => {
-    console.log(`Liking memory ${id}`)
-    toast.info(`Liking memory ${id}`)
-    // Implement actual like functionality
+  const handleEdit = (id: string) => {
+    console.log(`Editing memory ${id}`)
+    // Implement actual edit functionality
   }
 
-  const handleCollect = (id: string) => {
-    console.log(`Collecting memory ${id}`)
-    toast.info(`Collecting memory ${id}`)
-    // Implement actual collect functionality
+  const handleDelete = (id: string) => {
+    console.log(`Deleting memory ${id}`)
+    // Implement actual delete functionality
   }
 
   if (error) {
@@ -129,8 +187,8 @@ export default function MemoriesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6 flex flex-col items-center justify-between gap-2 sm:flex-row">
         <h1 className="text-2xl font-bold">Memories</h1>
-        <Link href="/memories/personal">
-          <Button>My Memories</Button>
+        <Link href="/memories">
+          <Button>All Memories</Button>
         </Link>
       </div>
 
@@ -178,6 +236,7 @@ export default function MemoriesPage() {
                   <TableHead className="w-[100px]">Source</TableHead>
                   <TableHead className="w-[100px]">Visibility</TableHead>
                   <TableHead className="w-[150px]">Actions</TableHead>
+                  <TableHead className="w-[100px]">Controls</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -206,19 +265,46 @@ export default function MemoriesPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleLike(memory.id)}
+                            onClick={() => handleEdit(memory.id)}
                           >
                             <Flame className="mr-1 h-4 w-4" />
-                            Like
+                            Burn
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleCollect(memory.id)}
+                            onClick={() => handleDelete(memory.id)}
                           >
                             <Brain className="mr-1 h-4 w-4" />
-                            Collect
+                            Memo
                           </Button>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col items-center space-y-2">
+                          {(() => {
+                            const randomAction =
+                              actions[
+                                Math.floor(Math.random() * actions.length)
+                              ]
+                            const Icon = randomAction.icon
+                            return (
+                              <div className="flex space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() =>
+                                    toast.info(
+                                      `${randomAction.label} action triggered`,
+                                    )
+                                  }
+                                >
+                                  <Icon className="mr-1 h-4 w-4" />
+                                  {randomAction.label}
+                                </Button>
+                              </div>
+                            )
+                          })()}
                         </div>
                       </TableCell>
                     </TableRow>

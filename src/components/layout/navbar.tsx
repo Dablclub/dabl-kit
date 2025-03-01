@@ -25,6 +25,10 @@ interface NavbarProps {
 export const Navbar = () => {
   const navItems = [
     {
+      name: 'Memories',
+      link: '/memories',
+    },
+    {
       name: 'Builds',
       link: '/projects',
     },

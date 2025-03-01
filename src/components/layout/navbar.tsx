@@ -26,7 +26,7 @@ export const Navbar = () => {
   const navItems = [
     {
       name: 'Builds',
-      link: '/builds',
+      link: '/projects',
     },
     {
       name: 'Leaderboard',

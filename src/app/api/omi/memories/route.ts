@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         createdAt: new Date(memoryData.created_at),
         source: memoryData.source,
         language: memoryData.language,
-        structured: memoryData.structured,
+        structured: JSON.parse(JSON.stringify(memoryData.structured)),
         transcriptSegments: JSON.parse(
           JSON.stringify(memoryData.transcript_segments),
         ),

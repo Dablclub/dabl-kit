@@ -18,7 +18,7 @@ export const Logo = () => {
         />
       </div>
       <span className="text-lg font-bold text-black dark:text-white">
-        dabl_kit
+        Action Item
       </span>
     </Link>
   )

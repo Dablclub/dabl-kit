@@ -8,8 +8,8 @@ import BaseLayout from '@/components/layout/base-layout'
 import OnchainProvider from '@/providers/onchainProvider'
 import { Toaster } from 'sonner'
 export const metadata: Metadata = {
-  title: 'dabl_kit',
-  description: 'Your home for all things AI x Onchain',
+  title: 'Action Item',
+  description: 'Turn ideas into actinable items',
 }
 
 const fontSans = Inter({

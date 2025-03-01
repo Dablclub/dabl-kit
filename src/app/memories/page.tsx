@@ -22,8 +22,6 @@ import {
 } from '@/components/ui/select'
 import {
   Loader2,
-  Play,
-  X,
   Brain,
   Flame,
   Blocks,
@@ -165,19 +163,6 @@ export default function MemoriesPage() {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
     setCurrentPage(1) // Reset to first page on new search
-  }
-
-  // Mock action handlers
-  const handlePlay = (id: string) => {
-    console.log(`Playing memory ${id}`)
-    toast.info(`Playing memory ${id}`)
-    // Implement actual play functionality
-  }
-
-  const handleCancel = (id: string) => {
-    console.log(`Cancelling memory ${id}`)
-    toast.info(`Cancelling memory ${id}`)
-    // Implement actual cancel functionality
   }
 
   const handleEdit = (id: string) => {

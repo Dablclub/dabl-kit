@@ -20,3 +20,4 @@ export function ProfileDetails({ user }: ProfileDetailsProps) {
     </Card>
   )
 }
+

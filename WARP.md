@@ -196,3 +196,4 @@ No test suite currently configured. When adding tests, consider:
 - Unit tests for controllers and utilities
 - Integration tests for API routes
 - E2E tests for critical user flows (authentication, memory creation, project creation)
+

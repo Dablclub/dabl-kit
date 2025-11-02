@@ -221,3 +221,4 @@ export async function getProjectsByCommunity(communityId: string) {
     throw new Error('Failed to get projects by community')
   }
 }
+

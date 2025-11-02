@@ -29,3 +29,4 @@ export const useCalEmbed = (options: CalEmbedOptions) => {
     layout: options.layout,
   }
 }
+

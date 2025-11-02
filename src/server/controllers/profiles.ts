@@ -167,3 +167,4 @@ export async function searchProfiles(query: string) {
     throw new Error('Failed to search profiles')
   }
 }
+

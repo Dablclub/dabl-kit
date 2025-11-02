@@ -41,3 +41,4 @@ export function ProfileAccount({ user }: ProfileAccountProps) {
     </Card>
   )
 }
+

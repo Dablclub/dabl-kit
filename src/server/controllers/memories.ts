@@ -345,3 +345,4 @@ export async function updateMemoryVisibility(params: {
     throw new Error('Failed to update memory visibility')
   }
 }
+

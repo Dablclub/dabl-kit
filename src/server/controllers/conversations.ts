@@ -307,3 +307,4 @@ export async function searchConversations(query: string) {
     throw new Error('Failed to search conversations')
   }
 }
+

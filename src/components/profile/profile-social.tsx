@@ -20,3 +20,4 @@ export function ProfileSocial({ user }: ProfileSocialProps) {
     </Card>
   )
 }
+

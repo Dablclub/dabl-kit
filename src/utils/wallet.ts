@@ -12,3 +12,4 @@ export function truncateAddress({
   if (!address) return ''
   return `${address.slice(0, start + 2)}...${address.slice(-end)}`
 }
+

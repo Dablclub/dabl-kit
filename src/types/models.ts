@@ -59,3 +59,4 @@ export interface Reward {
   amount: number
   questId: string
 }
+

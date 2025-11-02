@@ -54,3 +54,4 @@ export function getDynamicCredentialsFromPayload(payload: MiddlewarePayload) {
     extWallet,
   }
 }
+

@@ -65,3 +65,4 @@ export async function deleteUser(id: string) {
     throw new Error('Failed to delete user')
   }
 }
+

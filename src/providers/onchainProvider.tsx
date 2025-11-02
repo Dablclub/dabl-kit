@@ -96,3 +96,4 @@ export default function OnchainProvider({ children }: { children: ReactNode }) {
     </DynamicContextProvider>
   )
 }
+

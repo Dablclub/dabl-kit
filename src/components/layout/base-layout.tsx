@@ -27,3 +27,4 @@ const BaseLayout = ({ children }: Props) => {
 }
 
 export default BaseLayout
+

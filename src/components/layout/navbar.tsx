@@ -265,3 +265,4 @@ const MobileNav = ({ navItems, visible }: NavbarProps) => {
     </>
   )
 }
+

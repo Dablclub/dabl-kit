@@ -182,3 +182,4 @@ export async function deleteProfile(
     throw new Error('Failed to delete profile')
   }
 }
+

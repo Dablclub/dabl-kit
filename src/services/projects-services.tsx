@@ -176,3 +176,4 @@ export async function deleteProject(
     throw new Error('Failed to delete project')
   }
 }
+

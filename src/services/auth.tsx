@@ -19,3 +19,4 @@ export async function loginUser(data: LoginUserParams) {
     throw error
   }
 }
+

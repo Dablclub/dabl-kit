@@ -87,3 +87,4 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
     </Card>
   )
 }
+

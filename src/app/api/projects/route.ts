@@ -1,21 +1,24 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/server/prismaClient'
 import { searchProjects } from '@/server/controllers/projects'
+import { validateQueryParams, validateRequestBody } from '@/lib/validateRequest'
+import { successResponse, errorResponse, paginatedResponse } from '@/lib/api-response'
+import { NotFoundError, ServerError } from '@/lib/errors'
+import { GetProjectsSchema, CreateProjectSchema } from '@/validation/projects'
 
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url)
-
-  const take = Number(searchParams.get('take')) || 10
-  const skip = Number(searchParams.get('skip')) || 0
-  const cursor = searchParams.get('cursor')
-  const orderBy = searchParams.get('orderBy') || 'createdAt'
-  const direction = searchParams.get('direction') || 'desc'
-  const query = searchParams.get('query')
-
   try {
+    // Validate query parameters
+    const result = await validateQueryParams(request, GetProjectsSchema)
+    if (!result.success) {
+      return errorResponse(result.error, 400)
+    }
+
+    const { take, skip, cursor, orderBy, direction, query } = result.data
+
     if (query) {
       const projects = await searchProjects(query)
-      return NextResponse.json({ projects })
+      return successResponse({ projects })
     }
 
     const projects = await prisma.project.findMany({
@@ -48,26 +51,30 @@ export async function GET(request: Request) {
     const total = await prisma.project.count()
     const hasMore = skip + take < total
 
-    return NextResponse.json({
-      projects,
-      metadata: {
-        total,
-        hasMore,
-        nextCursor: hasMore ? projects[projects.length - 1]?.id : undefined,
-      },
+    return paginatedResponse(projects, {
+      total,
+      hasMore,
+      nextCursor: hasMore ? projects[projects.length - 1]?.id : undefined,
     })
   } catch (error) {
     console.error('Failed to fetch projects:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch projects' },
-      { status: 500 },
+    return errorResponse(
+      new ServerError('Failed to fetch projects'),
+      500,
     )
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const data = await request.json()
+    // Validate request body
+    const result = await validateRequestBody(request, CreateProjectSchema)
+    if (!result.success) {
+      return errorResponse(result.error, 400)
+    }
+
+    const data = result.data
+
     const project = await prisma.project.create({
       data,
       include: {
@@ -86,12 +93,12 @@ export async function POST(request: Request) {
       },
     })
 
-    return NextResponse.json(project)
+    return successResponse(project, 201)
   } catch (error) {
     console.error('Failed to create project:', error)
-    return NextResponse.json(
-      { error: 'Failed to create project' },
-      { status: 500 },
+    return errorResponse(
+      new ServerError('Failed to create project'),
+      500,
     )
   }
 }

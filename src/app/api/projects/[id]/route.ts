@@ -1,9 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import {
   deleteProject,
   getProjectById,
   updateProject,
 } from '@/server/controllers/projects'
+import { validateRequestBody } from '@/lib/validateRequest'
+import { successResponse, errorResponse } from '@/lib/api-response'
+import { NotFoundError, ServerError, ValidationError } from '@/lib/errors'
+import { UpdateProjectSchema, ProjectIdSchema } from '@/validation/projects'
 
 export async function GET(
   _request: NextRequest,
@@ -12,25 +16,30 @@ export async function GET(
   try {
     const { id } = params
 
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Project ID is required' },
-        { status: 400 },
+    // Validate ID
+    const idResult = ProjectIdSchema.safeParse({ id })
+    if (!idResult.success) {
+      return errorResponse(
+        new ValidationError('Invalid project ID'),
+        400,
       )
     }
 
     const project = await getProjectById(id)
 
     if (!project) {
-      return NextResponse.json({ error: 'Project not found' }, { status: 404 })
+      return errorResponse(
+        new NotFoundError('Project'),
+        404,
+      )
     }
 
-    return NextResponse.json({ project })
+    return successResponse({ project })
   } catch (error) {
     console.error('Error fetching project:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch project' },
-      { status: 500 },
+    return errorResponse(
+      new ServerError('Failed to fetch project'),
+      500,
     )
   }
 }
@@ -41,29 +50,40 @@ export async function PATCH(
 ) {
   try {
     const { id } = params
-    const data = await request.json()
 
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Project ID is required' },
-        { status: 400 },
+    // Validate ID
+    const idResult = ProjectIdSchema.safeParse({ id })
+    if (!idResult.success) {
+      return errorResponse(
+        new ValidationError('Invalid project ID'),
+        400,
       )
     }
 
-    if (!data || Object.keys(data).length === 0) {
-      return NextResponse.json(
-        { error: 'No update data provided' },
-        { status: 400 },
+    // Validate request body
+    const result = await validateRequestBody(request, UpdateProjectSchema)
+    if (!result.success) {
+      return errorResponse(result.error, 400)
+    }
+
+    const data = result.data
+
+    // Check if project exists
+    const existingProject = await getProjectById(id)
+    if (!existingProject) {
+      return errorResponse(
+        new NotFoundError('Project'),
+        404,
       )
     }
 
     const project = await updateProject(id, data)
-    return NextResponse.json(project)
+    return successResponse(project)
   } catch (error) {
     console.error('Error updating project:', error)
-    return NextResponse.json(
-      { error: 'Failed to update project' },
-      { status: 500 },
+    return errorResponse(
+      new ServerError('Failed to update project'),
+      500,
     )
   }
 }
@@ -75,26 +95,34 @@ export async function DELETE(
   try {
     const { id } = params
 
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Project ID is required' },
-        { status: 400 },
+    // Validate ID
+    const idResult = ProjectIdSchema.safeParse({ id })
+    if (!idResult.success) {
+      return errorResponse(
+        new ValidationError('Invalid project ID'),
+        400,
+      )
+    }
+
+    // Check if project exists
+    const existingProject = await getProjectById(id)
+    if (!existingProject) {
+      return errorResponse(
+        new NotFoundError('Project'),
+        404,
       )
     }
 
     const deletedProject = await deleteProject(id)
-    return NextResponse.json(
-      {
-        message: 'Project deleted successfully',
-        project: deletedProject,
-      },
-      { status: 200 },
-    )
+    return successResponse({
+      message: 'Project deleted successfully',
+      project: deletedProject,
+    })
   } catch (error) {
     console.error('Error deleting project:', error)
-    return NextResponse.json(
-      { error: 'Failed to delete project' },
-      { status: 500 },
+    return errorResponse(
+      new ServerError('Failed to delete project'),
+      500,
     )
   }
 }

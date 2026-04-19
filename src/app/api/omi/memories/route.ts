@@ -1,62 +1,8 @@
 import { createMemory } from '@/server/controllers/memories'
 import { NextRequest, NextResponse } from 'next/server'
-
-interface TranscriptSegment {
-  text: string
-  speaker: string
-  speakerId: number
-  is_user: boolean
-  start: number
-  end: number
-}
-
-interface ActionItem {
-  description: string
-  completed: boolean
-}
-
-// interface AppResponse {
-//   app_id: string
-//   content: string
-// }
-
-interface StructuredData {
-  title: string
-  overview: string
-  emoji: string
-  category: string
-  action_items: ActionItem[]
-  events: unknown[] // Type can be more specific based on your needs
-}
-
-interface Geolocation {
-  google_place_id: string
-  latitude: number
-  longitude: number
-  address: string
-  location_type: string
-}
-
-interface MemoryCreation {
-  id: string
-  created_at: string
-  started_at: string
-  finished_at: string
-  source: string
-  language: string
-  structured: StructuredData
-  transcript_segments: TranscriptSegment[]
-  geolocation: Geolocation
-  photos: string[]
-  plugins_results: unknown[]
-  external_data: unknown | null
-  discarded: boolean
-  deleted: boolean
-  visibility: string
-  processing_memory_id: string | null
-  status: string
-  uid?: string
-}
+import { requireOmiWebhookSignature } from '@/lib/omi-webhook'
+import { checkOmiWebhookRateLimit } from '@/lib/rate-limit'
+import { OmiMemoryWebhookSchema } from '@/types/omi'
 
 interface AgentResponse {
   result: boolean
@@ -71,6 +17,7 @@ export async function POST(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams
     const uid = searchParams.get('uid')
 
+    // Validate uid parameter is present
     if (!uid) {
       return NextResponse.json(
         { error: 'Missing required uid parameter' },
@@ -78,22 +25,54 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const memoryRequest = await request.json()
-
-    console.log('memoryRequest:', memoryRequest)
-    const memoryData: MemoryCreation = memoryRequest
-
-    // Validate required fields
-    if (
-      !memoryData.created_at ||
-      !memoryData.transcript_segments ||
-      !memoryData.id
-    ) {
+    // Step 1: Verify webhook signature
+    const verification = await requireOmiWebhookSignature(request)
+    if (!verification.valid) {
+      console.warn(`Webhook verification failed for uid ${uid}: ${verification.error}`)
       return NextResponse.json(
-        { error: 'Missing required fields in memory data' },
+        { error: 'Unauthorized' },
+        { status: 401 },
+      )
+    }
+
+    // Step 2: Check rate limit
+    const rateLimitResult = await checkOmiWebhookRateLimit(uid)
+    if (!rateLimitResult.allowed) {
+      console.warn(`Rate limit exceeded for uid ${uid}`)
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429, headers: { 'Retry-After': '60' } },
+      )
+    }
+
+    // Step 3: Parse and validate webhook format
+    let memoryRequest: unknown
+    try {
+      memoryRequest = await request.json()
+    } catch (error) {
+      console.warn('Failed to parse webhook body as JSON:', error)
+      return NextResponse.json(
+        { error: 'Invalid JSON format' },
         { status: 400 },
       )
     }
+
+    // Validate webhook against Omi schema
+    const validation = OmiMemoryWebhookSchema.safeParse(memoryRequest)
+    if (!validation.success) {
+      console.warn('Invalid Omi webhook format:', validation.error.flatten())
+      return NextResponse.json(
+        {
+          error: 'Invalid webhook format',
+          details: validation.error.flatten(),
+        },
+        { status: 400 },
+      )
+    }
+
+    const memoryData = validation.data
+
+    console.log('Processing valid memory:', memoryData.id)
 
     // Transform the memoryData to match the expected structure for createMemory
     await createMemory({
@@ -130,6 +109,11 @@ export async function POST(request: NextRequest) {
     const formattedTranscript = memoryData.transcript_segments
       .map((segment) => `${segment.speaker}: ${segment.text}`)
       .join('\n')
+
+    // Additional security: log rate limit status
+    console.log(
+      `Rate limit status for uid ${uid}: ${rateLimitResult.remaining} requests remaining`,
+    )
 
     const agentRequestBody = {
       user: uid,
